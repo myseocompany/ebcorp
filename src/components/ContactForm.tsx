@@ -14,16 +14,44 @@ export default function ContactForm({ title }: ContactFormProps) {
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://aricrm.com.co/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          company: formData.company,
+          email: formData.email,
+          phone: formData.phone
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('No pudimos enviar tu información. Por favor intenta nuevamente.');
+      }
+
       setIsSubmitted(true);
-      setIsSubmitting(false);
       setFormData({ name: '', company: '', email: '', phone: '' });
-    }, 1000);
+    } catch (err) {
+      console.error(err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Ocurrió un error inesperado. Por favor intenta nuevamente.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +87,11 @@ export default function ContactForm({ title }: ContactFormProps) {
     <div className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
       <h2 className="text-2xl font-bold text-slate-900 mb-6">{title}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+            {error}
+          </div>
+        )}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-2">
             Nombre completo *
